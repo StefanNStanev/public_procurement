@@ -1,4 +1,3 @@
-using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Porachki.Api.Data;
@@ -7,7 +6,7 @@ using Porachki.Api.Sync;
 
 namespace Porachki.Api.Api;
 
-public enum Facet { None, ContractType, Procedure, Division, Cpv, Municipality, Country, City }
+public enum Facet { None, ContractType, Procedure, Division, Municipality, Country, City }
 
 public class TenderQuery(AppDbContext db, IOptions<SyncOptions> options)
 {
@@ -49,9 +48,6 @@ public class TenderQuery(AppDbContext db, IOptions<SyncOptions> options)
 
         if (Has(f.Divisions) && exclude != Facet.Division)
             q = q.Where(t => f.Divisions!.Contains(t.CpvDivision!));
-
-        if (Has(f.Cpv) && exclude is not (Facet.Cpv or Facet.Division))
-            q = q.Where(CpvPredicate(f.Cpv!));
 
         if (Has(f.Municipalities) && exclude != Facet.Municipality)
         {
@@ -132,16 +128,6 @@ public class TenderQuery(AppDbContext db, IOptions<SyncOptions> options)
             .Select(x => new FacetValue(x.Key!, Labels.DivisionLabel(x.Key) ?? x.Key!, x.Count))
             .OrderBy(x => x.Key).ToList();
 
-        // Предмет: CPV кодове в избраните насоки (или топ 100 общо)
-        var cpvQuery = For(Facet.Cpv).Where(t => t.MainCpv != null);
-        var cpvRows = await cpvQuery.GroupBy(t => t.MainCpv)
-            .Select(g => new { g.Key, Count = g.Count() })
-            .OrderByDescending(x => x.Count).Take(Has(f.Divisions) ? 300 : 100).ToListAsync(ct);
-        var cpvNames = await CpvNamesAsync(cpvRows.Select(x => x.Key!), ct);
-        var cpv = cpvRows
-            .Select(x => new FacetValue(x.Key!, cpvNames.GetValueOrDefault(x.Key!) ?? x.Key!, x.Count, x.Key![..2]))
-            .ToList();
-
         List<FacetValue> municipalities = [], countries = [], cities = [];
         if (source == TenderSource.Bg)
         {
@@ -171,33 +157,7 @@ public class TenderQuery(AppDbContext db, IOptions<SyncOptions> options)
                 .ToList();
         }
 
-        return new Facets(contractTypes, procedures, divisions, cpv, municipalities, countries, cities, total);
-    }
-
-    /// <summary>MainCpv IN (точни кодове) OR MainCpv LIKE 'префикс%' …</summary>
-    private static Expression<Func<Tender, bool>> CpvPredicate(string[] codes)
-    {
-        var t = Expression.Parameter(typeof(Tender), "t");
-        var main = Expression.Property(t, nameof(Tender.MainCpv));
-        var notNull = Expression.NotEqual(main, Expression.Constant(null, typeof(string)));
-        var startsWith = typeof(string).GetMethod(nameof(string.StartsWith), [typeof(string)])!;
-
-        var exact = codes.Where(c => c.Length == 8).Distinct().ToList();
-        Expression? body = null;
-        if (exact.Count > 0)
-        {
-            var contains = typeof(Enumerable).GetMethods()
-                .First(m => m.Name == nameof(Enumerable.Contains) && m.GetParameters().Length == 2)
-                .MakeGenericMethod(typeof(string));
-            body = Expression.Call(contains, Expression.Constant(exact), main);
-        }
-        foreach (var prefix in codes.Where(c => c.Length is > 0 and < 8).Distinct())
-        {
-            var call = Expression.Call(main, startsWith, Expression.Constant(prefix));
-            body = body is null ? call : Expression.OrElse(body, call);
-        }
-        body ??= Expression.Constant(false);
-        return Expression.Lambda<Func<Tender, bool>>(Expression.AndAlso(notNull, body), t);
+        return new Facets(contractTypes, procedures, divisions, municipalities, countries, cities, total);
     }
 
     private async Task<Dictionary<string, string?>> CpvNamesAsync(IEnumerable<string> codes, CancellationToken ct)

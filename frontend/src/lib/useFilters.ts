@@ -2,7 +2,7 @@ import { useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import type { Filters, MultiKey } from '../api/types';
 
-const MULTI: MultiKey[] = ['contractTypes', 'procedures', 'divisions', 'cpv', 'municipalities', 'countries', 'cities'];
+const MULTI: MultiKey[] = ['contractTypes', 'procedures', 'divisions', 'municipalities', 'countries', 'cities'];
 const SINGLE = ['q', 'deadlineFrom', 'deadlineTo', 'minValue', 'maxValue', 'sort', 'page'] as const;
 type SingleKey = (typeof SINGLE)[number];
 
@@ -45,12 +45,6 @@ export function useFilters() {
         p.delete(key);
         const next = values.includes(value) ? values.filter((v) => v !== value) : [...values, value];
         next.forEach((v) => p.append(key, v));
-        // Смяна на насоката изчиства предмета, който вече не принадлежи към нея
-        if (key === 'divisions') {
-          const cpv = p.getAll('cpv').filter((c) => next.length === 0 || next.includes(c.slice(0, 2)));
-          p.delete('cpv');
-          cpv.forEach((c) => p.append('cpv', c));
-        }
         if (key === 'countries') {
           const cities = p.getAll('cities').filter((c) => next.length === 0 || next.includes(c.split('|')[0]));
           p.delete('cities');

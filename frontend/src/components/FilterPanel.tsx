@@ -12,23 +12,12 @@ interface Props {
 export function FilterPanel({ source, facets, filters, toggle, set }: Props) {
   const f = facets;
   const sel = (k: MultiKey) => filters[k] ?? [];
-  const hasDivision = sel('divisions').length > 0;
 
   return (
     <div className="filters">
       <FacetGroup title="Вид поръчка" values={f?.contractTypes ?? []} selected={sel('contractTypes')} onToggle={(v) => toggle('contractTypes', v)} />
       <FacetGroup title="Вид процедура" values={f?.procedures ?? []} selected={sel('procedures')} onToggle={(v) => toggle('procedures', v)} initialVisible={6} />
       <FacetGroup title="Насока" values={f?.divisions ?? []} selected={sel('divisions')} onToggle={(v) => toggle('divisions', v)} showKey initialVisible={10} />
-      <FacetGroup
-        title="Предмет"
-        values={f?.cpv ?? []}
-        selected={sel('cpv')}
-        onToggle={(v) => toggle('cpv', v)}
-        showKey
-        searchAbove={6}
-        hint={hasDivision ? undefined : 'Най-честите CPV кодове. Изберете насока, за да видите всички в нея.'}
-        defaultOpen={hasDivision || sel('cpv').length > 0}
-      />
 
       {source === 'bg' ? (
         <FacetGroup

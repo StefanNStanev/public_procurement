@@ -53,7 +53,6 @@ export interface Facets {
   contractTypes: FacetValue[];
   procedures: FacetValue[];
   divisions: FacetValue[];
-  cpv: FacetValue[];
   municipalities: FacetValue[];
   countries: FacetValue[];
   cities: FacetValue[];
@@ -76,7 +75,6 @@ export interface Filters {
   contractTypes?: string[];
   procedures?: string[];
   divisions?: string[];
-  cpv?: string[];
   municipalities?: string[];
   countries?: string[];
   cities?: string[];
@@ -88,7 +86,7 @@ export interface Filters {
   page?: string;
 }
 
-export type MultiKey = 'contractTypes' | 'procedures' | 'divisions' | 'cpv' | 'municipalities' | 'countries' | 'cities';
+export type MultiKey = 'contractTypes' | 'procedures' | 'divisions' | 'municipalities' | 'countries' | 'cities';
 
 // ---------- AI оценка ----------
 

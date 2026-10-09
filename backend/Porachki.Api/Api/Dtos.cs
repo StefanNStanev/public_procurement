@@ -13,8 +13,6 @@ public class TenderFilter
     [FromQuery(Name = "procedures")] public string[]? Procedures { get; set; }
     /// <summary>Насока – CPV раздел (2 цифри).</summary>
     [FromQuery(Name = "divisions")] public string[]? Divisions { get; set; }
-    /// <summary>Предмет – основен CPV код (8 цифри) или префикс.</summary>
-    [FromQuery(Name = "cpv")] public string[]? Cpv { get; set; }
     /// <summary>Община (само България). „__none__“ = неопределена.</summary>
     [FromQuery(Name = "municipalities")] public string[]? Municipalities { get; set; }
     /// <summary>Държава ISO2 (само Европа).</summary>
@@ -73,7 +71,6 @@ public record Facets(
     IReadOnlyList<FacetValue> ContractTypes,
     IReadOnlyList<FacetValue> Procedures,
     IReadOnlyList<FacetValue> Divisions,
-    IReadOnlyList<FacetValue> Cpv,
     IReadOnlyList<FacetValue> Municipalities,
     IReadOnlyList<FacetValue> Countries,
     IReadOnlyList<FacetValue> Cities,

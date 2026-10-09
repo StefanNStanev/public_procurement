@@ -12,7 +12,6 @@ const FACET_OF: Record<MultiKey, keyof Facets> = {
   contractTypes: 'contractTypes',
   procedures: 'procedures',
   divisions: 'divisions',
-  cpv: 'cpv',
   municipalities: 'municipalities',
   countries: 'countries',
   cities: 'cities',
@@ -26,7 +25,7 @@ export function ActiveFilters({ filters, facets, toggle, clearKey, clearAll }: P
     for (const value of filters[key] ?? []) {
       const found = list.find((x) => x.key === value);
       let label = found?.label ?? value;
-      if (key === 'divisions' || key === 'cpv') label = `${value} ${found ? found.label : ''}`.trim();
+      if (key === 'divisions') label = `${value} ${found ? found.label : ''}`.trim();
       if (key === 'cities' && !found) label = value.split('|')[1] ?? value;
       chips.push({ id: `${key}:${value}`, label, onRemove: () => toggle(key, value) });
     }

@@ -23,7 +23,7 @@ export function FacetGroup({
   const [expanded, setExpanded] = useState(false);
   const id = useId();
 
-  // Отваря се автоматично, когато стане релевантна (напр. „Предмет“ след избор на насока)
+  // Отваря се автоматично, когато defaultOpen стане true
   useEffect(() => {
     if (defaultOpen) setOpen(true);
   }, [defaultOpen]);
