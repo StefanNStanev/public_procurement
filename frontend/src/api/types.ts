@@ -88,7 +88,10 @@ export interface Filters {
 
 export type MultiKey = 'contractTypes' | 'procedures' | 'divisions' | 'municipalities' | 'countries' | 'cities';
 
-// ---------- AI оценка ----------
+// ---------- AI анализи ----------
+
+/** cost – разходи и печалба; roadmap – предпоставки и стъпки за изпълнение. */
+export type AnalysisKind = 'cost' | 'roadmap';
 
 export type Severity = 'low' | 'medium' | 'high';
 
@@ -113,6 +116,34 @@ export interface EstimateResult {
   confidenceReason: string;
 }
 
+export type PrerequisiteCategory = 'registration' | 'eligibility' | 'economic' | 'technical' | 'guarantee' | 'other';
+export type Phase = 'preparation' | 'submission' | 'evaluation' | 'contract' | 'execution' | 'completion';
+
+export interface RoadmapResult {
+  summary: string;
+  keyDates: { label: string; date: string | null; note: string | null }[];
+  prerequisitesOverview: string;
+  prerequisites: {
+    category: PrerequisiteCategory;
+    title: string;
+    description: string;
+    mandatory: boolean;
+    leadTime: string | null;
+    source: string | null;
+  }[];
+  steps: {
+    phase: Phase;
+    title: string;
+    description: string;
+    responsible: 'participant' | 'buyer' | 'both';
+    timing: string | null;
+    documents: string[];
+    tip: string | null;
+  }[];
+  commonPitfalls: string[];
+  missingInformation: string[];
+}
+
 export interface EstimateDocument {
   name: string;
   status: string;
@@ -123,6 +154,7 @@ export interface EstimateDocument {
 
 export interface Estimate {
   id: number;
+  kind: AnalysisKind;
   status: 'pending' | 'running' | 'done' | 'failed';
   stage: string | null;
   createdAt: string;
@@ -131,7 +163,8 @@ export interface Estimate {
   inputTokens: number | null;
   outputTokens: number | null;
   costUsd: number | null;
-  result: EstimateResult | null;
+  /** EstimateResult при kind=cost, RoadmapResult при kind=roadmap. */
+  result: EstimateResult | RoadmapResult | null;
   documents: EstimateDocument[] | null;
   error: string | null;
 }

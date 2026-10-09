@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { Estimate, Facets, Filters, Paged, Source, SyncStatus, TenderDetail, TenderListItem } from './types';
+import type { AnalysisKind, Estimate, Facets, Filters, Paged, Source, SyncStatus, TenderDetail, TenderListItem } from './types';
 
 const http = axios.create({
   baseURL: import.meta.env.VITE_API_URL ?? '/api',
@@ -35,18 +35,18 @@ export const api = {
 
   syncStatus: () => http.get<SyncStatus[]>('/sync/status').then((r) => r.data),
 
-  /** Последната AI оценка или null, ако няма. */
-  estimate: (tenderId: number, signal?: AbortSignal) =>
+  /** Последният AI анализ от дадения вид или null, ако няма. */
+  estimate: (tenderId: number, kind: AnalysisKind, signal?: AbortSignal) =>
     http
-      .get<Estimate>(`/bg/tenders/${tenderId}/estimate`, { signal })
+      .get<Estimate>(`/bg/tenders/${tenderId}/estimate`, { params: { kind }, signal })
       .then((r) => r.data)
       .catch((e) => {
         if (axios.isAxiosError(e) && e.response?.status === 404) return null;
         throw e;
       }),
 
-  startEstimate: (tenderId: number, force = false) =>
-    http.post<Estimate>(`/bg/tenders/${tenderId}/estimate`, null, { params: force ? { force: true } : {} }).then((r) => r.data),
+  startEstimate: (tenderId: number, kind: AnalysisKind, force = false) =>
+    http.post<Estimate>(`/bg/tenders/${tenderId}/estimate`, null, { params: force ? { kind, force: true } : { kind } }).then((r) => r.data),
 };
 
 /** Текстът на грешка от ProblemDetails на API-то. */

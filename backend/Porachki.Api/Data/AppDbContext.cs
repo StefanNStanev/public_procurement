@@ -70,13 +70,14 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         {
             e.ToTable("tender_estimates");
             e.Property(x => x.Status).HasConversion<byte>();
+            e.Property(x => x.Kind).HasConversion<byte>();
             e.Property(x => x.Stage).HasMaxLength(200);
             e.Property(x => x.Model).HasMaxLength(60);
             e.Property(x => x.CostUsd).HasPrecision(10, 4);
             e.Property(x => x.DocumentsJson).HasColumnType("mediumtext");
             e.Property(x => x.ResultJson).HasColumnType("mediumtext");
             e.Property(x => x.Error).HasMaxLength(2000);
-            e.HasIndex(x => new { x.TenderId, x.CreatedAt });
+            e.HasIndex(x => new { x.TenderId, x.Kind, x.CreatedAt });
         });
     }
 }

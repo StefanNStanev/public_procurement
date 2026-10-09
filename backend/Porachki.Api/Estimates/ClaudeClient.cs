@@ -16,7 +16,8 @@ public class ClaudeClient(HttpClient http, IOptions<EstimateOptions> options, IL
     public bool IsConfigured => !string.IsNullOrWhiteSpace(_opt.AnthropicApiKey);
 
     /// <param name="content">Съдържание на потребителското съобщение (текстови и document блокове).</param>
-    public async Task<Result> CompleteAsync(string system, JsonArray content, JsonObject? schema, CancellationToken ct)
+    /// <param name="fallbackInstruction">Текст, добавян при повторен опит без structured outputs.</param>
+    public async Task<Result> CompleteAsync(string system, JsonArray content, JsonObject? schema, string? fallbackInstruction, CancellationToken ct)
     {
         var useSchema = schema is not null;
         for (var attempt = 1; ; attempt++)
@@ -34,8 +35,8 @@ public class ClaudeClient(HttpClient http, IOptions<EstimateOptions> options, IL
             };
             if (useSchema)
                 body["output_config"] = new JsonObject { ["format"] = new JsonObject { ["type"] = "json_schema", ["schema"] = schema!.DeepClone() } };
-            else if (schema is not null)
-                ((JsonArray)body["messages"]![0]!["content"]!).Add(new JsonObject { ["type"] = "text", ["text"] = EstimatePrompt.JsonFallbackInstruction });
+            else if (schema is not null && fallbackInstruction is not null)
+                ((JsonArray)body["messages"]![0]!["content"]!).Add(new JsonObject { ["type"] = "text", ["text"] = fallbackInstruction });
 
             using var req = new HttpRequestMessage(HttpMethod.Post, _opt.AnthropicUrl) { Content = JsonContent.Create(body) };
             req.Headers.Add("x-api-key", _opt.AnthropicApiKey);

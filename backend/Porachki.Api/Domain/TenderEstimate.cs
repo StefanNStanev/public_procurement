@@ -8,11 +8,21 @@ public enum EstimateStatus : byte
     Failed = 3,
 }
 
-/// <summary>AI оценка на поръчка по документацията ѝ в ЦАИС ЕОП.</summary>
+/// <summary>Вид AI анализ.</summary>
+public enum EstimateKind : byte
+{
+    /// <summary>Себестойност, оферта, печалба, рискове.</summary>
+    Cost = 0,
+    /// <summary>Предпоставки и стъпки от подаването до завършването на поръчката.</summary>
+    Roadmap = 1,
+}
+
+/// <summary>AI анализ на поръчка по документацията ѝ в ЦАИС ЕОП.</summary>
 public class TenderEstimate
 {
     public long Id { get; set; }
     public long TenderId { get; set; }
+    public EstimateKind Kind { get; set; }
     public EstimateStatus Status { get; set; }
     /// <summary>Текущ етап, показван в интерфейса („Сваляне на документи 3/12“).</summary>
     public string? Stage { get; set; }

@@ -10,6 +10,7 @@ namespace Porachki.Api.Api;
 
 public record EstimateDto(
     long Id,
+    string Kind,
     string Status,
     string? Stage,
     DateTime CreatedAt,
@@ -22,50 +23,58 @@ public record EstimateDto(
     JsonElement? Documents,
     string? Error);
 
-/// <summary>AI оценка на поръчка от ЦАИС ЕОП по прикачените ѝ документи.</summary>
+/// <summary>
+/// AI анализи на поръчка от ЦАИС ЕОП по прикачените ѝ документи.
+/// kind=cost (по подразбиране) – разходи и печалба; kind=roadmap – предпоставки и стъпки за изпълнение.
+/// </summary>
 [ApiController]
 [Route("api/bg/tenders/{id:long}/estimate")]
 public class EstimatesController(AppDbContext db, EstimateWorker worker, ClaudeClient claude, IOptions<EstimateOptions> options) : ControllerBase
 {
     /// <summary>Последната оценка за поръчката (404, ако няма).</summary>
     [HttpGet]
-    public async Task<ActionResult<EstimateDto>> Get(long id, CancellationToken ct)
+    public async Task<ActionResult<EstimateDto>> Get(long id, [FromQuery] string? kind, CancellationToken ct)
     {
-        var e = await Latest(id, ct);
+        var e = await Latest(id, ParseKind(kind), ct);
         return e is null ? NotFound() : ToDto(e);
     }
 
     /// <summary>Стартира оценка. Връща съществуваща готова оценка, освен ако force=true.</summary>
     [HttpPost]
-    public async Task<ActionResult<EstimateDto>> Start(long id, [FromQuery] bool force, CancellationToken ct)
+    public async Task<ActionResult<EstimateDto>> Start(long id, [FromQuery] string? kind, [FromQuery] bool force, CancellationToken ct)
     {
+        var estimateKind = ParseKind(kind);
         if (!claude.IsConfigured)
             return Problem(statusCode: 400, title: "Липсва Anthropic API ключ. Задайте Estimates:AnthropicApiKey (виж README).");
 
         var tender = await db.Tenders.AsNoTracking().FirstOrDefaultAsync(t => t.Id == id && t.Source == TenderSource.Bg, ct);
         if (tender is null) return NotFound();
 
-        var latest = await Latest(id, ct);
+        var latest = await Latest(id, estimateKind, ct);
         if (latest is { Status: EstimateStatus.Pending or EstimateStatus.Running }) return ToDto(latest);
         if (latest is { Status: EstimateStatus.Done } && !force) return ToDto(latest);
 
         var since = DateTime.UtcNow.AddDays(-1);
         var today = await db.TenderEstimates.CountAsync(e => e.CreatedAt >= since, ct);
         if (today >= options.Value.MaxEstimatesPerDay)
-            return Problem(statusCode: 429, title: $"Достигнат е дневният лимит от {options.Value.MaxEstimatesPerDay} оценки (Estimates:MaxEstimatesPerDay).");
+            return Problem(statusCode: 429, title: $"Достигнат е дневният лимит от {options.Value.MaxEstimatesPerDay} AI анализа (Estimates:MaxEstimatesPerDay).");
 
-        var estimate = new TenderEstimate { TenderId = id, Status = EstimateStatus.Pending, Stage = "В опашката", CreatedAt = DateTime.UtcNow };
+        var estimate = new TenderEstimate { TenderId = id, Kind = estimateKind, Status = EstimateStatus.Pending, Stage = "В опашката", CreatedAt = DateTime.UtcNow };
         db.TenderEstimates.Add(estimate);
         await db.SaveChangesAsync(ct);
         worker.Enqueue(estimate.Id);
         return Accepted(ToDto(estimate));
     }
 
-    private Task<TenderEstimate?> Latest(long tenderId, CancellationToken ct) =>
-        db.TenderEstimates.AsNoTracking().Where(e => e.TenderId == tenderId).OrderByDescending(e => e.Id).FirstOrDefaultAsync(ct);
+    private Task<TenderEstimate?> Latest(long tenderId, EstimateKind kind, CancellationToken ct) =>
+        db.TenderEstimates.AsNoTracking().Where(e => e.TenderId == tenderId && e.Kind == kind).OrderByDescending(e => e.Id).FirstOrDefaultAsync(ct);
+
+    private static EstimateKind ParseKind(string? kind) =>
+        string.Equals(kind, "roadmap", StringComparison.OrdinalIgnoreCase) ? EstimateKind.Roadmap : EstimateKind.Cost;
 
     private static EstimateDto ToDto(TenderEstimate e) => new(
         e.Id,
+        e.Kind == EstimateKind.Roadmap ? "roadmap" : "cost",
         e.Status.ToString().ToLowerInvariant(),
         e.Stage,
         e.CreatedAt,

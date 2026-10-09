@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api/client';
-import type { Source, TenderDetail, TenderListItem } from '../api/types';
+import type { AnalysisKind, Source, TenderDetail, TenderListItem } from '../api/types';
 import { countdown, formatDate, formatMoney, formatTime } from '../lib/format';
-import { EstimatePanel } from './EstimatePanel';
+import { AiSection } from './AiSection';
 import { SparkIcon } from './icons';
 
 interface Props {
@@ -15,8 +15,12 @@ export function TenderRow({ t, source }: Props) {
   const [detail, setDetail] = useState<TenderDetail | null>(null);
   const [failed, setFailed] = useState(false);
   const [fullText, setFullText] = useState(false);
-  /** Натиснат е бутонът „AI анализ“ на реда – панелът стартира анализа веднага. */
-  const [aiRequested, setAiRequested] = useState(false);
+  /** Натиснат е AI бутон на реда – съответният анализ започва веднага. */
+  const [aiRequest, setAiRequest] = useState<AnalysisKind | null>(null);
+  const requestAi = (kind: AnalysisKind) => {
+    setAiRequest(kind);
+    setOpen(true);
+  };
   const cd = countdown(t.deadline);
 
   useEffect(() => {
@@ -55,18 +59,18 @@ export function TenderRow({ t, source }: Props) {
       <div className="row-value">
         {value ? <span>{value}</span> : <span className="muted">без стойност</span>}
         {source === 'bg' && (
-          <button
-            type="button"
-            className="ai-button"
-            onClick={() => {
-              setAiRequested(true);
-              setOpen(true);
-            }}
-            title="Оценка на себестойността и печалбата по документите в ЦАИС ЕОП"
-          >
-            <SparkIcon />
-            AI анализ
-          </button>
+          <div className="ai-buttons">
+            <button type="button" className="ai-button" onClick={() => requestAi('cost')}
+              title="Себестойност, препоръчителна оферта и печалба по документите в ЦАИС ЕОП">
+              <SparkIcon />
+              AI разходи
+            </button>
+            <button type="button" className="ai-button" onClick={() => requestAi('roadmap')}
+              title="Предпоставки и стъпки от подаването на офертата до приключването на договора">
+              <SparkIcon />
+              AI стъпки
+            </button>
+          </div>
         )}
       </div>
 
@@ -109,7 +113,7 @@ export function TenderRow({ t, source }: Props) {
             {source === 'bg' ? 'Отвори поръчката в ЦАИС ЕОП' : 'Отвори обявлението в TED'}
           </a>
 
-          {source === 'bg' && <EstimatePanel tender={t} autoStart={aiRequested} onStarted={() => setAiRequested(false)} />}
+          {source === 'bg' && <AiSection tender={t} request={aiRequest} onRequestHandled={() => setAiRequest(null)} />}
         </div>
       )}
     </li>

@@ -87,11 +87,14 @@ public class EstimateService(
 
             // 2) Съдържание за модела
             await SaveStage(estimate, "Подготовка на документите за анализ", ct);
-            var content = BuildContent(tender, main, extracted, infos);
+            var content = BuildContent(tender, main, extracted, infos, estimate.Kind);
 
             // 3) Анализ
             await SaveStage(estimate, "Анализ с Claude (обикновено 1–3 минути)", ct);
-            var result = await claude.CompleteAsync(EstimatePrompt.System(DateOnly.FromDateTime(DateTime.UtcNow)), content, EstimatePrompt.Schema(), ct);
+            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+            var result = estimate.Kind == EstimateKind.Roadmap
+                ? await claude.CompleteAsync(RoadmapPrompt.System(today), content, RoadmapPrompt.Schema(), RoadmapPrompt.JsonFallbackInstruction, ct)
+                : await claude.CompleteAsync(EstimatePrompt.System(today), content, EstimatePrompt.Schema(), EstimatePrompt.JsonFallbackInstruction, ct);
             var json = ExtractJson(result.Text)
                 ?? throw new InvalidOperationException(result.StopReason == "max_tokens"
                     ? "Отговорът на модела беше прекъснат (max_tokens). Увеличете Estimates:MaxOutputTokens."
@@ -120,7 +123,7 @@ public class EstimateService(
         await db.SaveChangesAsync(CancellationToken.None);
     }
 
-    private JsonArray BuildContent(Tender tender, EopDocumentClient.EopTender eopTender, List<ExtractedFile> files, List<DocInfo> infos)
+    private JsonArray BuildContent(Tender tender, EopDocumentClient.EopTender eopTender, List<ExtractedFile> files, List<DocInfo> infos, EstimateKind kind)
     {
         var content = new JsonArray();
         var sb = new StringBuilder();
@@ -172,7 +175,9 @@ public class EstimateService(
             infos.Add(new DocInfo(f.Name, text.Length < f.Text.Length ? "включен частично" : f.Status, 0, text.Length, true));
         }
 
-        sb.AppendLine("\nНаправи оценката по документацията по-горе.");
+        sb.AppendLine(kind == EstimateKind.Roadmap
+            ? "\nСъстави предпоставките и стъпките за участие и изпълнение по документацията по-горе."
+            : "\nНаправи оценката по документацията по-горе.");
         content.Add(new JsonObject { ["type"] = "text", ["text"] = sb.ToString() });
         return content;
     }
