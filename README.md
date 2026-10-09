@@ -6,9 +6,9 @@
 
 | Част | Технологии |
 |---|---|
-| Бекенд | ASP.NET Core 9, EF Core 9 + Pomelo MySQL, фонова синхронизация |
-| База | MySQL 8.4 |
-| Фронтенд | React 19, TypeScript, Vite, axios, react-router |
+| Backend | ASP.NET Core 9, EF Core 9 + Pomelo MySQL, фонова синхронизация |
+| DB | MySQL 8.4 |
+| Frontend | React 19, TypeScript, Vite, axios, react-router |
 
 ## Стартиране с един клик
 
