@@ -11,6 +11,8 @@ public class TenderFilter
     [FromQuery(Name = "contractTypes")] public string[]? ContractTypes { get; set; }
     /// <summary>Вид процедура (ключове от фасета procedures).</summary>
     [FromQuery(Name = "procedures")] public string[]? Procedures { get; set; }
+    /// <summary>single (еднократна поръчка) | framework (рамково споразумение) | dps (динамична система за покупки)</summary>
+    [FromQuery(Name = "arrangements")] public string[]? Arrangements { get; set; }
     /// <summary>Насока – CPV раздел (2 цифри).</summary>
     [FromQuery(Name = "divisions")] public string[]? Divisions { get; set; }
     /// <summary>Община (само България). „__none__“ = неопределена.</summary>
@@ -43,6 +45,8 @@ public record TenderListItem(
     string? ContractType,
     string? ContractTypeLabel,
     string? ProcedureLabel,
+    string Arrangement,
+    string ArrangementLabel,
     string? MainCpv,
     string? CpvName,
     string? Division,
@@ -70,6 +74,7 @@ public record FacetValue(string Key, string Label, int Count, string? Group = nu
 public record Facets(
     IReadOnlyList<FacetValue> ContractTypes,
     IReadOnlyList<FacetValue> Procedures,
+    IReadOnlyList<FacetValue> Arrangements,
     IReadOnlyList<FacetValue> Divisions,
     IReadOnlyList<FacetValue> Municipalities,
     IReadOnlyList<FacetValue> Countries,

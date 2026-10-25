@@ -52,6 +52,7 @@ export function TenderRow({ t, source }: Props) {
         <p className="row-tags">
           <span className="tag-place">{place}</span>
           {t.contractTypeLabel && <span className={`tag tag-${t.contractType}`}>{t.contractTypeLabel}</span>}
+          {t.arrangement !== 'single' && <span className="tag tag-muted">{t.arrangementLabel}</span>}
           {t.divisionLabel && <span className="tag tag-muted" title={t.cpvName ?? undefined}>{t.divisionLabel}</span>}
         </p>
       </div>

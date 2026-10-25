@@ -17,6 +17,13 @@ export function FilterPanel({ source, facets, filters, toggle, set }: Props) {
     <div className="filters">
       <FacetGroup title="Вид поръчка" values={f?.contractTypes ?? []} selected={sel('contractTypes')} onToggle={(v) => toggle('contractTypes', v)} />
       <FacetGroup title="Вид процедура" values={f?.procedures ?? []} selected={sel('procedures')} onToggle={(v) => toggle('procedures', v)} initialVisible={6} />
+      <FacetGroup
+        title="Еднократна или рамкова"
+        values={f?.arrangements ?? []}
+        selected={sel('arrangements')}
+        onToggle={(v) => toggle('arrangements', v)}
+        hint="Рамковите споразумения и динамичните системи за покупки не са конкретна поръчка, а рамка за бъдещи възлагания."
+      />
       <FacetGroup title="Насока" values={f?.divisions ?? []} selected={sel('divisions')} onToggle={(v) => toggle('divisions', v)} showKey initialVisible={10} />
 
       {source === 'bg' ? (

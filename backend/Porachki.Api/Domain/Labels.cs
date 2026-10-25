@@ -79,9 +79,46 @@ public static class Labels
         ["98"] = "Други обществени и персонални услуги",
     };
 
+    /// <summary>Еднократна поръчка или рамка за бъдещи възлагания (рамково споразумение, ДСП).</summary>
+    public static readonly IReadOnlyDictionary<string, string> Arrangements = new Dictionary<string, string>
+    {
+        [Arrangement.Single] = "Еднократна поръчка",
+        [Arrangement.Framework] = "Рамково споразумение",
+        [Arrangement.Dps] = "Динамична система за покупки",
+    };
+
     public static string? ContractTypeLabel(string? key) =>
         key is not null && ContractTypes.TryGetValue(key, out var l) ? l : key;
 
     public static string? DivisionLabel(string? key) =>
         key is not null && CpvDivisions.TryGetValue(key, out var l) ? l : key;
+
+    /// <summary>Липсващата стойност (стари записи) се води еднократна поръчка.</summary>
+    public static string ArrangementLabel(string? key) =>
+        Arrangements.GetValueOrDefault(key ?? Arrangement.Single, key ?? "");
+}
+
+public static class Arrangement
+{
+    public const string Single = "single";
+    public const string Framework = "framework";
+    public const string Dps = "dps";
+
+    /// <summary>
+    /// Резервен признак по текста (предмет, вид процедура), когато източникът не дава изрично поле:
+    /// „Сключване на рамково споразумение за доставка на…“.
+    /// </summary>
+    public static string? FromText(params string?[] texts)
+    {
+        foreach (var t in texts)
+        {
+            if (t is null) continue;
+            if (t.Contains("динамична система за покупки", StringComparison.OrdinalIgnoreCase)
+                || t.Contains("dynamic purchasing system", StringComparison.OrdinalIgnoreCase)) return Dps;
+            if (t.Contains("рамково споразумение", StringComparison.OrdinalIgnoreCase)
+                || t.Contains("рамкови споразумения", StringComparison.OrdinalIgnoreCase)
+                || t.Contains("framework agreement", StringComparison.OrdinalIgnoreCase)) return Framework;
+        }
+        return null;
+    }
 }

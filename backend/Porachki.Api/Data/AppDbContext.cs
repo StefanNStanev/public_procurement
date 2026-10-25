@@ -26,6 +26,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.Property(x => x.ContractType).HasMaxLength(20);
             e.Property(x => x.ProcedureKey).HasMaxLength(120);
             e.Property(x => x.ProcedureLabel).HasMaxLength(250);
+            e.Property(x => x.Arrangement).HasMaxLength(20);
             e.Property(x => x.MainCpv).HasMaxLength(10);
             e.Property(x => x.CpvDivision).HasMaxLength(2);
             e.Property(x => x.CpvCodes).HasMaxLength(2000);
@@ -44,6 +45,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.HasIndex(x => new { x.Source, x.PublishedAt });
             e.HasIndex(x => new { x.Source, x.ContractType });
             e.HasIndex(x => new { x.Source, x.ProcedureKey });
+            e.HasIndex(x => new { x.Source, x.Arrangement });
             e.HasIndex(x => new { x.Source, x.CpvDivision, x.MainCpv });
             e.HasIndex(x => new { x.Source, x.Municipality });
             e.HasIndex(x => new { x.Source, x.CountryCode, x.City });

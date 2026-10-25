@@ -239,6 +239,16 @@ public partial class EopOcdsSource(HttpClient http, IOptions<SyncOptions> option
         if (methodDetails is not null) { procLabel = Capitalize(methodDetails); procKey = "bg:" + procLabel.ToLowerInvariant(); }
         else if (method is not null) { procKey = method; procLabel = Labels.Procedures.GetValueOrDefault(method, method); }
 
+        // Рамково споразумение / ДСП: OCDS techniques (на ниво поръчка или обособена позиция), иначе по текста
+        string? arrangement = null;
+        if (tender is { } td)
+        {
+            var techniques = lots.Select(l => l.Prop("techniques")).Prepend(td.Prop("techniques")).ToList();
+            arrangement = techniques.Any(t => t?.Prop("hasDynamicPurchasingSystem").Str() == "true") ? Arrangement.Dps
+                : techniques.Any(t => t?.Prop("hasFrameworkAgreement").Str() == "true") ? Arrangement.Framework
+                : Arrangement.FromText(title, methodDetails) ?? Arrangement.Single;
+        }
+
         var tenderNumber = tender?.Prop("id").Str();
         var displayId = tenderNumber is not null && tenderNumber.All(char.IsDigit) ? tenderNumber : TrailingNumber().Match(ocid).Value;
 
@@ -258,6 +268,7 @@ public partial class EopOcdsSource(HttpClient http, IOptions<SyncOptions> option
             ContractType = NormalizeCategory(tender?.Prop("mainProcurementCategory").Str()),
             ProcedureKey = procKey,
             ProcedureLabel = procLabel,
+            Arrangement = arrangement,
             CpvCodes = cpvCodes,
             CpvNames = cpvNames,
             CountryCode = "BG",

@@ -12,6 +12,9 @@ export interface TenderListItem {
   contractType: string | null;
   contractTypeLabel: string | null;
   procedureLabel: string | null;
+  /** single – еднократна поръчка; framework – рамково споразумение; dps – динамична система за покупки. */
+  arrangement: 'single' | 'framework' | 'dps';
+  arrangementLabel: string;
   mainCpv: string | null;
   cpvName: string | null;
   division: string | null;
@@ -52,6 +55,7 @@ export interface FacetValue {
 export interface Facets {
   contractTypes: FacetValue[];
   procedures: FacetValue[];
+  arrangements: FacetValue[];
   divisions: FacetValue[];
   municipalities: FacetValue[];
   countries: FacetValue[];
@@ -74,6 +78,7 @@ export interface Filters {
   q?: string;
   contractTypes?: string[];
   procedures?: string[];
+  arrangements?: string[];
   divisions?: string[];
   municipalities?: string[];
   countries?: string[];
@@ -86,7 +91,7 @@ export interface Filters {
   page?: string;
 }
 
-export type MultiKey = 'contractTypes' | 'procedures' | 'divisions' | 'municipalities' | 'countries' | 'cities';
+export type MultiKey = 'contractTypes' | 'procedures' | 'arrangements' | 'divisions' | 'municipalities' | 'countries' | 'cities';
 
 // ---------- AI анализи ----------
 
