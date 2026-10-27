@@ -57,6 +57,7 @@ public class TenderWriter(AppDbContext db)
         ContractType = newer.ContractType ?? older.ContractType,
         ProcedureKey = newer.ProcedureKey ?? older.ProcedureKey,
         ProcedureLabel = newer.ProcedureLabel ?? older.ProcedureLabel,
+        Arrangement = newer.Arrangement ?? older.Arrangement,
         CpvCodes = newer.CpvCodes.Count > 0 ? newer.CpvCodes : older.CpvCodes,
         CpvNames = newer.CpvNames.Count > 0 ? newer.CpvNames : older.CpvNames,
         CountryCode = newer.CountryCode ?? older.CountryCode,
@@ -79,6 +80,7 @@ public class TenderWriter(AppDbContext db)
         if (u.BuyerName is not null) t.BuyerName = Cut(u.BuyerName, 500);
         if (u.ContractType is not null) t.ContractType = u.ContractType;
         if (u.ProcedureKey is not null) { t.ProcedureKey = Cut(u.ProcedureKey, 120); t.ProcedureLabel = Cut(u.ProcedureLabel, 250); }
+        if (u.Arrangement is not null) t.Arrangement = u.Arrangement;
         if (u.CpvCodes.Count > 0)
         {
             t.MainCpv = u.CpvCodes[0];

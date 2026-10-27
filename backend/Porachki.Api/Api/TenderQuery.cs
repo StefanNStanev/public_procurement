@@ -6,7 +6,7 @@ using Porachki.Api.Sync;
 
 namespace Porachki.Api.Api;
 
-public enum Facet { None, ContractType, Procedure, Division, Municipality, Country, City }
+public enum Facet { None, ContractType, Procedure, Arrangement, Division, Municipality, Country, City }
 
 public class TenderQuery(AppDbContext db, IOptions<SyncOptions> options)
 {
@@ -45,6 +45,13 @@ public class TenderQuery(AppDbContext db, IOptions<SyncOptions> options)
 
         if (Has(f.Procedures) && exclude != Facet.Procedure)
             q = q.Where(t => f.Procedures!.Contains(t.ProcedureKey!));
+
+        if (Has(f.Arrangements) && exclude != Facet.Arrangement)
+        {
+            var keys = f.Arrangements!.ToArray();
+            var includeNull = keys.Contains(Domain.Arrangement.Single);
+            q = q.Where(t => keys.Contains(t.Arrangement!) || (includeNull && t.Arrangement == null));
+        }
 
         if (Has(f.Divisions) && exclude != Facet.Division)
             q = q.Where(t => f.Divisions!.Contains(t.CpvDivision!));
@@ -122,6 +129,13 @@ public class TenderQuery(AppDbContext db, IOptions<SyncOptions> options)
             .Select(g => new FacetValue(g.Key, g.Select(x => x.ProcedureLabel).FirstOrDefault(l => l != null) ?? g.Key, g.Sum(x => x.Count)))
             .OrderByDescending(x => x.Count).ToList();
 
+        var arrangements = (await For(Facet.Arrangement).GroupBy(t => t.Arrangement)
+                .Select(g => new { g.Key, Count = g.Count() }).ToListAsync(ct))
+            .GroupBy(x => x.Key ?? Domain.Arrangement.Single)
+            .Where(g => Labels.Arrangements.ContainsKey(g.Key))
+            .Select(g => new FacetValue(g.Key, Labels.ArrangementLabel(g.Key), g.Sum(x => x.Count)))
+            .OrderBy(x => x.Key != Domain.Arrangement.Single).ThenByDescending(x => x.Count).ToList();
+
         var divisions = (await For(Facet.Division).GroupBy(t => t.CpvDivision)
                 .Select(g => new { g.Key, Count = g.Count() }).ToListAsync(ct))
             .Where(x => x.Key != null)
@@ -157,7 +171,7 @@ public class TenderQuery(AppDbContext db, IOptions<SyncOptions> options)
                 .ToList();
         }
 
-        return new Facets(contractTypes, procedures, divisions, municipalities, countries, cities, total);
+        return new Facets(contractTypes, procedures, arrangements, divisions, municipalities, countries, cities, total);
     }
 
     private async Task<Dictionary<string, string?>> CpvNamesAsync(IEnumerable<string> codes, CancellationToken ct)
@@ -176,6 +190,8 @@ public class TenderQuery(AppDbContext db, IOptions<SyncOptions> options)
         t.ContractType,
         Labels.ContractTypeLabel(t.ContractType),
         t.ProcedureLabel,
+        t.Arrangement ?? Domain.Arrangement.Single,
+        Labels.ArrangementLabel(t.Arrangement),
         t.MainCpv,
         t.MainCpv is null ? null : cpvNames.GetValueOrDefault(t.MainCpv),
         t.CpvDivision,

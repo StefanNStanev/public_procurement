@@ -17,6 +17,7 @@ public record TenderUpsert
     public string? ContractType { get; init; }
     public string? ProcedureKey { get; init; }
     public string? ProcedureLabel { get; init; }
+    public string? Arrangement { get; init; }
     public IReadOnlyList<string> CpvCodes { get; init; } = [];
     public IReadOnlyDictionary<string, string> CpvNames { get; init; } = new Dictionary<string, string>();
     public string? CountryCode { get; init; }

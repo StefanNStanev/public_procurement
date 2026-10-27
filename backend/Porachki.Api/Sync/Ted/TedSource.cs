@@ -99,6 +99,11 @@ public class TedSource(HttpClient http, IOptions<SyncOptions> options, ILogger<T
         var nature = Text(n, "contract-nature");
         var procedure = Text(n, "procedure-type");
         var country = Countries.ToIso2(Text(n, "buyer-country"));
+        var title = Text(n, "notice-title");
+        // eForms BT-765 (none | fa-wo-rc | fa-w-rc | fa-mix) и BT-766 (none | dps-list | dps-nlist), по обособени позиции
+        var arrangement = Values(n, "dps-usage-lot").Any(v => v.Str() is { } s && s != "none") ? Arrangement.Dps
+            : Values(n, "framework-agreement-lot").Any(v => v.Str() is { } s && s != "none") ? Arrangement.Framework
+            : Arrangement.FromText(title) ?? Arrangement.Single;
         var deadline = Values(n, "deadline-receipt-tender-date-lot").Select(v => Json.ParseDate(v.Str())).Where(d => d is not null).Min();
 
         return new TenderUpsert
@@ -106,7 +111,7 @@ public class TedSource(HttpClient http, IOptions<SyncOptions> options, ILogger<T
             Source = TenderSource.Eu,
             ExternalId = Text(n, "procedure-identifier") ?? pubNo,
             NoticeNumber = pubNo,
-            Title = Text(n, "notice-title"),
+            Title = title,
             BuyerName = Text(n, "buyer-name"),
             ContractType = nature?.ToLowerInvariant() switch
             {
@@ -117,6 +122,7 @@ public class TedSource(HttpClient http, IOptions<SyncOptions> options, ILogger<T
             },
             ProcedureKey = procedure,
             ProcedureLabel = procedure is null ? null : Labels.Procedures.GetValueOrDefault(procedure, procedure),
+            Arrangement = arrangement,
             CpvCodes = cpv,
             CountryCode = country,
             City = NormalizeCity(Text(n, "buyer-city")),

@@ -2,7 +2,7 @@ import { useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import type { Filters, MultiKey } from '../api/types';
 
-const MULTI: MultiKey[] = ['contractTypes', 'procedures', 'divisions', 'municipalities', 'countries', 'cities'];
+const MULTI: MultiKey[] = ['contractTypes', 'procedures', 'arrangements', 'divisions', 'municipalities', 'countries', 'cities'];
 const SINGLE = ['q', 'deadlineFrom', 'deadlineTo', 'minValue', 'maxValue', 'sort', 'page'] as const;
 type SingleKey = (typeof SINGLE)[number];
 

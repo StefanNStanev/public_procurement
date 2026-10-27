@@ -29,6 +29,9 @@ public class Tender
     public string? ProcedureKey { get; set; }
     public string? ProcedureLabel { get; set; }
 
+    /// <summary>single | framework | dps (<see cref="Arrangement"/>). null = стар запис, води се single.</summary>
+    public string? Arrangement { get; set; }
+
     public string? MainCpv { get; set; }
     /// <summary>Първите 2 цифри на основния CPV код – „насока“.</summary>
     public string? CpvDivision { get; set; }

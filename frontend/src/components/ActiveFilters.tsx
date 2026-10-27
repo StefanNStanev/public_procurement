@@ -11,6 +11,7 @@ interface Props {
 const FACET_OF: Record<MultiKey, keyof Facets> = {
   contractTypes: 'contractTypes',
   procedures: 'procedures',
+  arrangements: 'arrangements',
   divisions: 'divisions',
   municipalities: 'municipalities',
   countries: 'countries',

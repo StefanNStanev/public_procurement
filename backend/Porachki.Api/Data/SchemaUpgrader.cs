@@ -41,6 +41,22 @@ public static class SchemaUpgrader
             await db.Database.ExecuteSqlRawAsync(
                 "CREATE INDEX `IX_tender_estimates_TenderId_Kind_CreatedAt` ON `tender_estimates` (`TenderId`, `Kind`, `CreatedAt`)", ct);
         }
+
+        await UpgradeTendersAsync(db, ct);
+    }
+
+    /// <summary>Колони в tenders, добавени след първата версия (AppDbContext ги създава в нови бази).</summary>
+    private static async Task UpgradeTendersAsync(AppDbContext db, CancellationToken ct = default)
+    {
+        // v4: еднократна поръчка / рамково споразумение / ДСП. Старите редове остават NULL (= еднократна)
+        // до следващото им обновяване от източника.
+        if (!await ColumnExistsAsync(db, "tenders", "Arrangement", ct))
+        {
+            await db.Database.ExecuteSqlRawAsync(
+                "ALTER TABLE `tenders` ADD COLUMN `Arrangement` varchar(20) NULL AFTER `ProcedureLabel`", ct);
+            await db.Database.ExecuteSqlRawAsync(
+                "CREATE INDEX `IX_tenders_Source_Arrangement` ON `tenders` (`Source`, `Arrangement`)", ct);
+        }
     }
 
     private static async Task<bool> ColumnExistsAsync(AppDbContext db, string table, string column, CancellationToken ct)
